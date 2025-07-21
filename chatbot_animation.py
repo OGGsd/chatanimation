@@ -8,11 +8,267 @@ from io import BytesIO
 import math
 from datetime import datetime, timedelta
 import calendar
+import random
+
+class PaperPlaneAnimation:
+    def __init__(self, parent, callback):
+        self.window = tk.Toplevel(parent)
+        self.window.title("Sending Confirmation")
+        self.window.attributes('-alpha', 0.0)
+        
+        # Configure window
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        self.window.geometry(f'{screen_width}x{screen_height}')
+        self.window.attributes('-fullscreen', True)
+        self.window.configure(bg='white')
+        
+        # Create canvas for animation
+        self.canvas = tk.Canvas(self.window, bg='white', highlightthickness=0)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+        
+        # Load and resize paper plane image
+        self.plane_image = self.create_paper_plane()
+        
+        # Animation parameters
+        self.x = 100
+        self.y = screen_height // 2
+        self.angle = 0
+        self.amplitude = 100
+        self.frequency = 0.01
+        self.t = 0
+        self.callback = callback
+        
+        # Start animations
+        self.animate_window_appear()
+
+    def create_paper_plane(self):
+        # Create a more detailed paper plane shape
+        size = 50
+        plane = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(plane)
+        
+        # Draw plane shape with more detail
+        body_points = [
+            (0, size//2),          # Nose
+            (size*3//4, size//3),  # Top wing front
+            (size, size//2),       # Tail
+            (size*3//4, size*2//3) # Bottom wing front
+        ]
+        draw.polygon(body_points, fill='#0066cc')
+        
+        # Add wing details
+        wing_top = [
+            (size*2//4, size//3),
+            (size*3//4, size//3),
+            (size*2//4, size//6)
+        ]
+        wing_bottom = [
+            (size*2//4, size*2//3),
+            (size*3//4, size*2//3),
+            (size*2//4, size*5//6)
+        ]
+        draw.polygon(wing_top, fill='#3388dd')
+        draw.polygon(wing_bottom, fill='#3388dd')
+        
+        return ImageTk.PhotoImage(plane)
+
+    def animate_window_appear(self):
+        alpha = self.window.attributes('-alpha')
+        if alpha < 1.0:
+            alpha += 0.1
+            self.window.attributes('-alpha', alpha)
+            self.window.after(20, self.animate_window_appear)
+        else:
+            self.animate_plane()
+
+    def animate_plane(self):
+        if self.x < self.window.winfo_width() + 100:
+            # Update position with more natural movement
+            self.x += 6
+            self.t += self.frequency
+            
+            # Create a more complex flight path
+            base_y = self.window.winfo_height() // 2
+            wave_y = math.sin(self.t) * self.amplitude
+            bounce_y = math.sin(self.t * 2) * (self.amplitude / 4)
+            self.y = base_y + wave_y + bounce_y
+            
+            # Clear and redraw
+            self.canvas.delete('all')
+            
+            # Enhanced trail effect
+            trail_length = 25
+            for i in range(trail_length):
+                x = self.x - i * 6
+                t_offset = self.t - i * self.frequency
+                wave_y_trail = math.sin(t_offset) * self.amplitude
+                bounce_y_trail = math.sin(t_offset * 2) * (self.amplitude / 4)
+                y = base_y + wave_y_trail + bounce_y_trail
+                
+                # Trail with gradient
+                size = (trail_length - i) / trail_length
+                r = int(0)
+                g = int(102 * size)
+                b = int(204 * size)
+                color = f'#{r:02x}{g:02x}{b:02x}'
+                
+                # Main trail
+                self.canvas.create_oval(
+                    x-1, y-1, x+2, y+2,
+                    fill=color, outline=color
+                )
+                
+                # Secondary particles
+                if i % 3 == 0:
+                    particle_spread = 10 * size
+                    for _ in range(2):
+                        px = x + random.randint(-int(particle_spread), int(particle_spread))
+                        py = y + random.randint(-int(particle_spread), int(particle_spread))
+                        p_size = size * 2
+                        self.canvas.create_oval(
+                            px-p_size, py-p_size, px+p_size, py+p_size,
+                            fill=color, outline=color
+                        )
+            
+            # Draw plane with rotation
+            angle = math.degrees(math.atan2(wave_y - self.last_y if hasattr(self, 'last_y') else 0, 6))
+            self.last_y = wave_y
+            
+            # Store current plane position for particles
+            self.current_plane_pos = (self.x, self.y)
+            
+            # Draw the plane
+            self.canvas.create_image(self.x, self.y, image=self.plane_image)
+            
+            self.window.after(20, self.animate_plane)
+        else:
+            self.show_ending_scene()
+
+    def show_ending_scene(self):
+        # Clear canvas with fade effect
+        def fade_out_canvas(alpha=1.0):
+            if alpha > 0:
+                alpha -= 0.1
+                self.canvas.delete('all')
+                self.canvas.configure(bg=f'#{int(255 * alpha):02x}' * 3)
+                self.window.after(50, lambda: fade_out_canvas(alpha))
+            else:
+                self.show_final_message()
+        
+        fade_out_canvas()
+
+    def show_final_message(self):
+        self.canvas.configure(bg='white')
+        
+        # Create elements with appear animation
+        elements = [
+            {
+                'type': 'text',
+                'x': self.window.winfo_width() // 2,
+                'y': self.window.winfo_height() // 2 - 50,
+                'text': "Tack för din bokning!",
+                'font': ('Helvetica', 24, 'bold'),
+                'fill': '#0066cc'
+            },
+            {
+                'type': 'text',
+                'x': self.window.winfo_width() // 2,
+                'y': self.window.winfo_height() // 2 + 10,
+                'text': "En bekräftelse har skickats till din e-post.",
+                'font': ('Helvetica', 16),
+                'fill': '#333333'
+            }
+        ]
+        
+        def animate_element(elem, index):
+            if elem['type'] == 'text':
+                # Create text with fade and slide effect
+                self.canvas.create_text(
+                    elem['x'],
+                    elem['y'] + 20,  # Start below final position
+                    text=elem['text'],
+                    font=elem['font'],
+                    fill=elem['fill'],
+                    tags=f'elem_{index}',
+                    state='hidden'
+                )
+                
+                # Animate appearance
+                def appear_text(progress=0):
+                    if progress <= 1:
+                        # Update position and opacity
+                        y_offset = 20 * (1 - progress)
+                        alpha = int(255 * progress)
+                        color = elem['fill'][:-2] + f'{alpha:02x}' if elem['fill'].startswith('#') else elem['fill']
+                        
+                        self.canvas.itemconfigure(f'elem_{index}', state='normal')
+                        self.canvas.coords(f'elem_{index}', 
+                                         elem['x'],
+                                         elem['y'] + y_offset)
+                        self.canvas.itemconfigure(f'elem_{index}', fill=color)
+                        
+                        self.window.after(20, lambda: appear_text(progress + 0.1))
+                
+                # Start animation with delay based on index
+                self.window.after(index * 300, appear_text)
+        
+        # Animate each element
+        for i, elem in enumerate(elements):
+            animate_element(elem, i)
+        
+        # Add logo with special animation
+        try:
+            logo_url = "https://www.axiestudio.se/logo.jpg"
+            logo_response = requests.get(logo_url)
+            logo_image = Image.open(BytesIO(logo_response.content))
+            logo_image = logo_image.resize((100, 100), Image.Resampling.LANCZOS)
+            self.logo_photo = ImageTk.PhotoImage(logo_image)
+            
+            # Add logo with scale animation
+            logo_y = self.window.winfo_height() // 2 + 100
+            self.canvas.create_image(
+                self.window.winfo_width() // 2,
+                logo_y,
+                image=self.logo_photo,
+                tags='logo',
+                state='hidden'
+            )
+            
+            def animate_logo(scale=0.5):
+                if scale <= 1:
+                    self.canvas.itemconfigure('logo', state='normal')
+                    # Apply scale transform
+                    self.canvas.scale('logo',
+                                    self.window.winfo_width() // 2,
+                                    logo_y,
+                                    1.1, 1.1)
+                    self.window.after(50, lambda: animate_logo(scale + 0.1))
+            
+            # Start logo animation after text
+            self.window.after(len(elements) * 300 + 200, animate_logo)
+        except:
+            pass
+        
+        # Start final fade out after delay
+        self.window.after(5000, self.fade_out)
+
+    def fade_out(self):
+        alpha = self.window.attributes('-alpha')
+        if alpha > 0:
+            alpha -= 0.1
+            self.window.attributes('-alpha', alpha)
+            self.window.after(50, self.fade_out)
+        else:
+            self.window.destroy()
+            if self.callback:
+                self.callback()
 
 class BookingModal:
     def __init__(self, parent):
         self.window = tk.Toplevel(parent)
         self.window.title("Boka Tid - Axie Studio")
+        self.parent = parent
         
         # Configure the window
         screen_width = self.window.winfo_screenwidth()
@@ -23,42 +279,39 @@ class BookingModal:
         y = (screen_height - window_height) // 2
         self.window.geometry(f'{window_width}x{window_height}+{x}+{y}')
         
+        # Make sure booking modal stays on top
+        self.window.transient(parent)
+        self.window.grab_set()
+        
         # Set window style
         self.window.configure(bg='white')
-        self.window.attributes('-alpha', 0.0)  # Start fully transparent
+        self.window.attributes('-alpha', 0.0)
         
         # Custom fonts
         self.title_font = font.Font(family="Helvetica", size=16, weight="bold")
         self.header_font = font.Font(family="Helvetica", size=12, weight="bold")
         self.normal_font = font.Font(family="Helvetica", size=10)
         
+        # Pre-select Tuesday at 10:00 for the demo
+        self.selected_date = None
+        self.selected_time = "10:00"
+        
         self.setup_ui()
         self.animate_appear()
-
-    def setup_ui(self):
-        # Header
-        header = tk.Frame(self.window, bg='#0066cc', height=60)
-        header.pack(fill=tk.X, pady=0)
-        header.pack_propagate(False)
         
-        tk.Label(header, text="Boka Konsultation", font=self.title_font,
-                bg='#0066cc', fg='white').pack(pady=15)
+        # Auto-select next Tuesday
+        next_tuesday = self.get_next_tuesday()
+        self.current_date = next_tuesday
+        self.update_calendar()
+        self.select_date(next_tuesday.day)
+        self.select_time("10:00")
 
-        # Main content
-        content = tk.Frame(self.window, bg='white')
-        content.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-
-        # Calendar section
-        self.setup_calendar(content)
-        
-        # Time slots section
-        self.setup_time_slots(content)
-        
-        # Confirmation button
-        self.confirm_button = tk.Button(content, text="Bekräfta Bokning",
-                                      font=self.header_font, bg='#0066cc', fg='white',
-                                      command=self.confirm_booking)
-        self.confirm_button.pack(pady=20, ipady=10, ipadx=20)
+    def get_next_tuesday(self):
+        current = datetime.now()
+        days_ahead = 1 - current.weekday()  # Tuesday is 1
+        if days_ahead <= 0:  # Target day already happened this week
+            days_ahead += 7
+        return current + timedelta(days=days_ahead)
 
     def setup_calendar(self, parent):
         calendar_frame = tk.Frame(parent, bg='white')
@@ -81,6 +334,34 @@ class BookingModal:
         self.calendar_grid.pack(pady=10)
         self.update_calendar()
 
+    def select_date(self, day):
+        self.selected_date = day
+        # Update button states
+        for widget in self.calendar_grid.winfo_children():
+            if isinstance(widget, tk.Button):
+                if widget.cget('text') == str(day):
+                    widget.configure(bg='#0066cc', fg='white')
+                else:
+                    widget.configure(bg='#f0f0f0', fg='black')
+        self.update_confirm_button()
+
+    def select_time(self, time):
+        self.selected_time = time
+        # Update button states
+        for widget in self.time_slots_frame.winfo_children():
+            if isinstance(widget, tk.Button):
+                if widget.cget('text') == time:
+                    widget.configure(bg='#0066cc', fg='white')
+                else:
+                    widget.configure(bg='#f0f0f0', fg='black')
+        self.update_confirm_button()
+
+    def update_confirm_button(self):
+        if self.selected_date and self.selected_time:
+            self.confirm_button.configure(state='normal', bg='#0066cc')
+        else:
+            self.confirm_button.configure(state='disabled', bg='#cccccc')
+
     def setup_time_slots(self, parent):
         time_frame = tk.Frame(parent, bg='white')
         time_frame.pack(fill=tk.X, pady=10)
@@ -90,14 +371,13 @@ class BookingModal:
         
         times = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00"]
         
-        slots_frame = tk.Frame(time_frame, bg='white')
-        slots_frame.pack(fill=tk.X, pady=5)
+        self.time_slots_frame = tk.Frame(time_frame, bg='white')
+        self.time_slots_frame.pack(fill=tk.X, pady=5)
         
         for i, time in enumerate(times):
-            btn = tk.Button(slots_frame, text=time, font=self.normal_font,
-                          bg='#f0f0f0', width=8)
+            btn = tk.Button(self.time_slots_frame, text=time, font=self.normal_font,
+                          bg='#f0f0f0', width=8, command=lambda t=time: self.select_time(t))
             btn.grid(row=i//3, column=i%3, padx=5, pady=5)
-            btn.bind('<Button-1>', lambda e, t=time: self.select_time(t))
 
     def update_calendar(self):
         # Clear existing calendar
@@ -121,12 +401,6 @@ class BookingModal:
                     btn.grid(row=i+1, column=j, padx=2, pady=2)
                     btn.bind('<Button-1>', lambda e, d=day: self.select_date(d))
 
-    def select_date(self, day):
-        print(f"Selected date: {day}/{self.current_date.month}/{self.current_date.year}")
-
-    def select_time(self, time):
-        print(f"Selected time: {time}")
-
     def prev_month(self):
         self.current_date = self.current_date.replace(day=1) - timedelta(days=1)
         self.month_label.config(text=self.current_date.strftime("%B %Y"))
@@ -138,8 +412,10 @@ class BookingModal:
         self.update_calendar()
 
     def confirm_booking(self):
-        print("Booking confirmed!")
-        self.animate_disappear()
+        if self.selected_date and self.selected_time:
+            self.animate_disappear()
+            # Start paper plane animation
+            PaperPlaneAnimation(self.parent, self.cleanup)
 
     def animate_appear(self):
         alpha = self.window.attributes('-alpha')
@@ -155,7 +431,35 @@ class BookingModal:
             self.window.attributes('-alpha', alpha)
             self.window.after(20, self.animate_disappear)
         else:
-            self.window.destroy()
+            self.cleanup()
+
+    def cleanup(self):
+        self.window.destroy()
+
+    def setup_ui(self):
+        # Header
+        header = tk.Frame(self.window, bg='#0066cc', height=60)
+        header.pack(fill=tk.X, pady=0)
+        header.pack_propagate(False)
+        
+        tk.Label(header, text="Boka Konsultation", font=self.title_font,
+                bg='#0066cc', fg='white').pack(pady=15)
+
+        # Main content
+        content = tk.Frame(self.window, bg='white')
+        content.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+
+        # Calendar section
+        self.setup_calendar(content)
+        
+        # Time slots section
+        self.setup_time_slots(content)
+        
+        # Confirmation button (disabled by default)
+        self.confirm_button = tk.Button(content, text="Bekräfta Bokning",
+                                      font=self.header_font, bg='#cccccc', fg='white',
+                                      state='disabled', command=self.confirm_booking)
+        self.confirm_button.pack(pady=20, ipady=10, ipadx=20)
 
 class AnimatedChatbot:
     def __init__(self, root):
@@ -270,8 +574,10 @@ class AnimatedChatbot:
             ("bot", "Hej! Välkommen till Axie Studio! 👋"),
             ("bot", "Vi hjälper företag med AI och chatbot-lösningar."),
             ("user", "Hej! Jag är intresserad av era tjänster."),
-            ("bot", "Vad bra! Vill du boka en tid för konsultation?"),
-            ("user", "Ja, det skulle vara perfekt!"),
+            ("bot", "Vad bra! Jag kan hjälpa dig att boka en demo."),
+            ("user", "Det låter perfekt! När kan vi ses?"),
+            ("bot", "Vi har lediga tider nästa vecka. Passar tisdag eller onsdag?"),
+            ("user", "Tisdag skulle fungera bra!"),
             ("bot", "Utmärkt! Jag öppnar bokningssystemet nu..."),
             ("system", "OPEN_BOOKING_MODAL")
         ]
@@ -363,32 +669,38 @@ class AnimatedChatbot:
     def start_demo(self):
         def demo_loop():
             while True:
-                # Clear previous messages
-                for widget in self.scrollable_frame.winfo_children():
-                    if widget != self.typing_frame:
-                        widget.destroy()
-                self.root.update()
-                
-                # Start typing indicator animation
-                self.animate_typing_dots()
-                
-                # Run through demo conversation
-                for sender, message in self.demo_conversation:
-                    if sender == "system" and message == "OPEN_BOOKING_MODAL":
-                        time.sleep(1)
-                        self.root.after(0, lambda: BookingModal(self.root))
-                        time.sleep(5)  # Wait for booking modal interaction
-                        break
-                    elif sender == "bot":
-                        time.sleep(1)
-                        self.add_message(message, True)
-                    else:
-                        self.simulate_typing(message)
-                        self.add_message(message, False)
+                try:
+                    # Clear previous messages
+                    for widget in self.scrollable_frame.winfo_children():
+                        if widget != self.typing_frame:
+                            widget.destroy()
+                    self.root.update()
                     
-                    time.sleep(1.5)
-                
-                time.sleep(3)  # Pause before restarting
+                    # Start typing indicator animation
+                    self.animate_typing_dots()
+                    
+                    # Run through demo conversation
+                    for sender, message in self.demo_conversation:
+                        if sender == "system" and message == "OPEN_BOOKING_MODAL":
+                            time.sleep(1)
+                            # Create booking modal and wait for it
+                            self.root.after(0, lambda: BookingModal(self.root))
+                            break
+                        elif sender == "bot":
+                            time.sleep(1)
+                            self.add_message(message, True)
+                        else:
+                            self.simulate_typing(message)
+                            self.add_message(message, False)
+                        
+                        time.sleep(2)  # Slightly longer pause between messages
+                    
+                    # Don't restart immediately
+                    time.sleep(10)
+                    
+                except Exception as e:
+                    print(f"Error in demo loop: {e}")
+                    time.sleep(1)
 
         # Start demo in separate thread
         demo_thread = threading.Thread(target=demo_loop, daemon=True)

@@ -6,6 +6,24 @@
     <title>Axie Studio Kundservice</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/chat-animations.css">
+    <style>
+        :root {
+            --primary-color: #0066cc;
+            --secondary-color: #f8f9fa;
+            --text-color: #333333;
+            --bot-bg: #0066cc;
+            --user-bg: #e9ecef;
+            --bot-text: #ffffff;
+            --user-text: #333333;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+    </style>
 </head>
 <body>
     <!-- Chat Interface -->
@@ -50,12 +68,23 @@
         </div>
     </div>
 
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+
+    <!-- Animation Container -->
+    <div id="animationContainer"></div>
+
     <script src="js/chat-controller.js"></script>
     <script>
         function toggleChat() {
             const container = document.getElementById('chatContainer');
             container.classList.toggle('active');
         }
+
+        // Initialize chat controller when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.chatController = new ChatController();
+        });
     </script>
 </body>
 </html>
