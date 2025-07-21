@@ -373,6 +373,7 @@ body {
 .send-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .send-button svg {
@@ -581,11 +582,12 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    cursor: pointer;
+    cursor: default;
     font-size: 14px;
     font-weight: 500;
     transition: var(--transition-fast);
     position: relative;
+    pointer-events: none;
 }
 
 .calendar-day.header {
@@ -596,7 +598,7 @@ body {
 
 .calendar-day.disabled {
     color: var(--text-light);
-    cursor: not-allowed;
+    cursor: default;
 }
 
 .calendar-day.available:hover {
@@ -632,9 +634,10 @@ body {
     border: 2px solid var(--border-light);
     border-radius: var(--border-radius);
     text-align: center;
-    cursor: pointer;
+    cursor: default;
     font-weight: 500;
     transition: var(--transition-fast);
+    pointer-events: none;
 }
 
 .time-slot:hover {
@@ -675,6 +678,8 @@ body {
     font-size: 14px;
     transition: var(--transition-fast);
     font-family: inherit;
+    pointer-events: none;
+    cursor: default;
 }
 
 .form-group input:focus,
@@ -782,6 +787,7 @@ body {
 .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .btn-confirm {

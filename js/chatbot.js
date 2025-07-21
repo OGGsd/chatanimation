@@ -6,9 +6,10 @@ class AxieChatbot {
         this.selectedTime = null;
         this.bookingData = {};
         this.conversationStarted = false;
+        this.isAutomated = true;
         
         this.initializeElements();
-        this.bindEvents();
+        // Remove manual event binding for full automation
         this.startConversation();
     }
 
@@ -33,62 +34,31 @@ class AxieChatbot {
         this.successOverlay = document.getElementById('successOverlay');
     }
 
-    bindEvents() {
-        // Chat interface events
-        this.chatButton.addEventListener('click', () => this.openChat());
-        this.minimizeBtn.addEventListener('click', () => this.closeChat());
-        
-        // Booking modal events
-        this.bindBookingEvents();
-        
-        // Form validation
-        this.bindFormValidation();
-    }
-
-    bindBookingEvents() {
-        // Step navigation
-        document.getElementById('nextToTime').addEventListener('click', () => this.nextStep());
-        document.getElementById('backToDate').addEventListener('click', () => this.prevStep());
-        document.getElementById('nextToForm').addEventListener('click', () => this.nextStep());
-        document.getElementById('backToTime').addEventListener('click', () => this.prevStep());
-        document.getElementById('nextToConfirm').addEventListener('click', () => this.nextStep());
-        document.getElementById('backToForm').addEventListener('click', () => this.prevStep());
-        document.getElementById('confirmBooking').addEventListener('click', () => this.confirmBooking());
-        
-        // Calendar navigation
-        document.getElementById('prevMonth').addEventListener('click', () => this.changeMonth(-1));
-        document.getElementById('nextMonth').addEventListener('click', () => this.changeMonth(1));
-    }
-
-    bindFormValidation() {
-        const requiredFields = ['fullName', 'email'];
-        requiredFields.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            field.addEventListener('input', () => this.validateForm());
-        });
-    }
-
-    async startConversation() {
+    async startAutomatedDemo() {
         if (this.conversationStarted) return;
         this.conversationStarted = true;
 
-        // Wait a moment then start the conversation
-        await this.delay(2000);
+        // Auto-open chat after short delay
+        await this.delay(1500);
+        await this.openChat();
+        
+        // Start conversation
+        await this.delay(800);
         
         const conversation = [
-            { text: "Hej! Välkommen till Axie Studio! 👋", isBot: true, delay: 1000 },
-            { text: "Vi hjälper företag att implementera AI-lösningar för bättre kundservice.", isBot: true, delay: 2000 },
-            { text: "Hej! Det låter intressant. Kan ni hjälpa oss?", isBot: false, delay: 1500 },
-            { text: "Absolut! Vi skulle gärna visa er vad vi kan göra.", isBot: true, delay: 1800 },
-            { text: "Har ni tid för en kort demo någon gång?", isBot: true, delay: 1200 },
-            { text: "Ja, det skulle vara perfekt!", isBot: false, delay: 1000 },
-            { text: "Fantastiskt! Låt mig hjälpa er att boka en tid. 📅", isBot: true, delay: 1500 },
+            { text: "Hej! Välkommen till Axie Studio! 👋", isBot: true, delay: 800 },
+            { text: "Vi hjälper företag att implementera AI-lösningar för bättre kundservice.", isBot: true, delay: 1200 },
+            { text: "Hej! Det låter intressant. Kan ni hjälpa oss?", isBot: false, delay: 1000 },
+            { text: "Absolut! Vi skulle gärna visa er vad vi kan göra.", isBot: true, delay: 1000 },
+            { text: "Har ni tid för en kort demo någon gång?", isBot: true, delay: 800 },
+            { text: "Ja, det skulle vara perfekt!", isBot: false, delay: 800 },
+            { text: "Fantastiskt! Låt mig hjälpa er att boka en tid. 📅", isBot: true, delay: 1000 },
         ];
 
         for (const message of conversation) {
             if (message.isBot) {
                 await this.showTyping();
-                await this.delay(1500);
+                await this.delay(1000);
                 await this.hideTyping();
                 await this.addBotMessage(message.text);
             } else {
@@ -99,7 +69,7 @@ class AxieChatbot {
         }
 
         // Open booking modal after conversation
-        await this.delay(1000);
+        await this.delay(800);
         await this.openBookingModal();
     }
 
@@ -209,6 +179,40 @@ class AxieChatbot {
         this.bookingModal.classList.add('active');
         this.generateCalendar();
         this.generateTimeSlots();
+        
+        // Start automated booking process
+        await this.delay(1000);
+        await this.automateBookingProcess();
+    }
+    
+    async automateBookingProcess() {
+        // Step 1: Auto-select date
+        await this.delay(800);
+        this.autoSelectNextTuesday();
+        
+        // Move to time selection
+        await this.delay(1200);
+        await this.nextStep();
+        
+        // Step 2: Auto-select time
+        await this.delay(800);
+        this.selectTime('10:00');
+        
+        // Move to form
+        await this.delay(1000);
+        await this.nextStep();
+        
+        // Step 3: Auto-fill form
+        await this.delay(500);
+        await this.autoFillForm();
+        
+        // Move to confirmation
+        await this.delay(1500);
+        await this.nextStep();
+        
+        // Step 4: Auto-confirm booking
+        await this.delay(2000);
+        await this.confirmBooking();
     }
 
     closeBookingModal() {
@@ -287,9 +291,7 @@ class AxieChatbot {
         nextTuesday.setDate(today.getDate() + daysUntilTuesday);
         
         // Select the Tuesday
-        setTimeout(() => {
-            this.selectDate(nextTuesday.getDate(), nextTuesday);
-        }, 500);
+        this.selectDate(nextTuesday.getDate(), nextTuesday);
     }
 
     selectDate(day, date) {
@@ -318,14 +320,8 @@ class AxieChatbot {
             const timeElement = document.createElement('div');
             timeElement.className = 'time-slot';
             timeElement.textContent = time;
-            timeElement.addEventListener('click', () => this.selectTime(time));
             this.timeSlots.appendChild(timeElement);
         });
-        
-        // Auto-select 10:00 for demo
-        setTimeout(() => {
-            this.selectTime('10:00');
-        }, 800);
     }
 
     selectTime(time) {
@@ -343,10 +339,9 @@ class AxieChatbot {
         });
         
         this.selectedTime = time;
-        document.getElementById('nextToForm').disabled = false;
     }
 
-    nextStep() {
+    async nextStep() {
         if (this.currentStep >= 4) return;
         
         // Hide current step
@@ -360,12 +355,7 @@ class AxieChatbot {
         
         // Update progress
         this.updateProgress();
-        
-        // Auto-fill form for demo
-        if (this.currentStep === 3) {
-            setTimeout(() => this.autoFillForm(), 1000);
-        }
-        
+
         // Update summary for confirmation step
         if (this.currentStep === 4) {
             this.updateSummary();
@@ -417,38 +407,18 @@ class AxieChatbot {
             const field = document.getElementById(fieldId);
             if (field) {
                 await this.typeIntoField(field, value);
-                await this.delay(300);
+                await this.delay(200);
             }
         }
-        
-        this.validateForm();
     }
 
     async typeIntoField(field, text) {
         field.value = '';
-        field.focus();
         
         for (const char of text) {
             field.value += char;
-            await this.delay(50);
+            await this.delay(40);
         }
-        
-        field.blur();
-    }
-
-    validateForm() {
-        const fullName = document.getElementById('fullName').value.trim();
-        const email = document.getElementById('email').value.trim();
-        
-        const isValid = fullName && email && this.isValidEmail(email);
-        document.getElementById('nextToConfirm').disabled = !isValid;
-        
-        return isValid;
-    }
-
-    isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
     }
 
     updateSummary() {
@@ -489,7 +459,7 @@ class AxieChatbot {
         await this.showSuccessMessage();
         
         // Reset after success
-        await this.delay(5000);
+        await this.delay(4000);
         await this.resetDemo();
     }
 
@@ -540,13 +510,8 @@ class AxieChatbot {
         
         // Restart conversation after delay
         setTimeout(() => {
-            this.startConversation();
-        }, 3000);
-    }
-
-    changeMonth(direction) {
-        // For demo purposes, we'll keep it simple and just regenerate current month
-        this.generateCalendar();
+            this.startAutomatedDemo();
+        }, 2000);
     }
 
     delay(ms) {
