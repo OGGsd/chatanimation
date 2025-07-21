@@ -13,15 +13,15 @@ class ChatController {
         this.selectedTime = null;
         
         this.demoConversation = [
-            { id: 'msg1', text: "Hej! Välkommen till Axie Studio! 👋", isBot: true, delay: 500 },
-            { id: 'msg2', text: "Vi hjälper företag med AI och chatbot-lösningar.", isBot: true, delay: 1000 },
-            { id: 'msg3', text: "Hej! Jag är intresserad av era tjänster.", isBot: false, delay: 800 },
-            { id: 'msg4', text: "Vad bra! Jag kan hjälpa dig att boka en demo.", isBot: true, delay: 1200 },
-            { id: 'msg5', text: "Det låter perfekt! När kan vi ses?", isBot: false, delay: 800 },
-            { id: 'msg6', text: "Vi har lediga tider nästa vecka. Passar tisdag eller onsdag?", isBot: true, delay: 1000 },
-            { id: 'msg7', text: "Tisdag skulle fungera bra!", isBot: false, delay: 600 },
-            { id: 'msg8', text: "Utmärkt! Jag öppnar bokningssystemet nu...", isBot: true, delay: 1000 },
-            { id: 'msg9', text: "OPEN_BOOKING_MODAL", isBot: true, isSystem: true, delay: 300 }
+            { id: 'msg1', text: "Hej! Välkommen till Axie Studio! 👋", isBot: true, delay: 1000 },
+            { id: 'msg2', text: "Vi hjälper företag med AI och chatbot-lösningar.", isBot: true, delay: 1500 },
+            { id: 'msg3', text: "Hej! Jag är intresserad av era tjänster.", isBot: false, delay: 1200 },
+            { id: 'msg4', text: "Vad bra! Jag kan hjälpa dig att boka en demo.", isBot: true, delay: 1500 },
+            { id: 'msg5', text: "Det låter perfekt! När kan vi ses?", isBot: false, delay: 1000 },
+            { id: 'msg6', text: "Vi har lediga tider nästa vecka. Passar tisdag eller onsdag?", isBot: true, delay: 1500 },
+            { id: 'msg7', text: "Tisdag skulle fungera bra!", isBot: false, delay: 800 },
+            { id: 'msg8', text: "Utmärkt! Jag öppnar bokningssystemet nu...", isBot: true, delay: 1200 },
+            { id: 'msg9', text: "OPEN_BOOKING_MODAL", isBot: true, isSystem: true, delay: 500 }
         ];
 
         this.startDemo();
@@ -42,7 +42,7 @@ class ChatController {
                 await this.delay(2000);
             } finally {
                 this.isAnimating = false;
-                await this.delay(2000);
+                await this.delay(3000); // Longer pause between cycles
             }
         }
     }
@@ -50,6 +50,7 @@ class ChatController {
     async runDemoCycle() {
         // Reset everything
         this.processedMessages.clear();
+        this.currentStep = 1;
         document.querySelector('.chat-container')?.classList.remove('fade-out');
         document.getElementById('modalContainer').innerHTML = '';
         document.getElementById('animationContainer').innerHTML = '';
@@ -69,7 +70,7 @@ class ChatController {
 
             if (message.isBot) {
                 await this.showTypingIndicator();
-                await this.delay(1000);
+                await this.delay(1500); // Longer typing delay
                 await this.hideTypingIndicator();
                 await this.addMessage(message);
             } else {
@@ -85,7 +86,7 @@ class ChatController {
     async animateInitialLoad() {
         const container = document.querySelector('.chat-container');
         container.classList.add('active');
-        await this.delay(500);
+        await this.delay(800);
     }
 
     clearMessages() {
@@ -126,8 +127,9 @@ class ChatController {
             const word = words[i];
             for (let char of word) {
                 element.textContent += char;
-                await this.delay(30);
+                await this.delay(40); // Slightly slower typing
             }
+            await this.delay(80); // Pause between words
         }
     }
 
@@ -140,12 +142,16 @@ class ChatController {
             const words = text.split(' ');
             
             for (const word of words) {
-                this.messageInput.value += word + ' ';
-                await this.delay(100);
+                for (const char of word) {
+                    this.messageInput.value += char;
+                    await this.delay(60); // Realistic typing speed
+                }
+                this.messageInput.value += ' ';
+                await this.delay(120); // Pause between words
             }
             
             this.sendButton.classList.add('active');
-            await this.delay(100);
+            await this.delay(300);
             this.sendButton.classList.remove('active');
             this.messageInput.value = '';
         } finally {
@@ -166,9 +172,11 @@ class ChatController {
         const messages = Array.from(this.chatMessages.getElementsByClassName('message'));
         messages.forEach((msg, index) => {
             if (index >= this.maxVisibleMessages) {
-                msg.remove();
+                msg.style.opacity = '0.2';
+                msg.style.transform = 'translateY(-10px) scale(0.95)';
+                msg.style.filter = 'blur(1px)';
             } else {
-                const opacity = 1 - (index * 0.2);
+                const opacity = 1 - (index * 0.15);
                 msg.style.opacity = opacity;
                 if (index === this.maxVisibleMessages - 1) {
                     msg.classList.add('fading');
@@ -251,7 +259,7 @@ class ChatController {
         modal.classList.add('show');
 
         // Auto-select date and time after a delay
-        await this.delay(1000);
+        await this.delay(1500);
         await this.autoSelectDateTime();
     }
 
@@ -260,11 +268,6 @@ class ChatController {
         const nextTuesday = new Date(today);
         nextTuesday.setDate(today.getDate() + ((9 - today.getDay()) % 7));
         
-        const days = [];
-        const monthStart = new Date(nextTuesday.getFullYear(), nextTuesday.getMonth(), 1);
-        const monthEnd = new Date(nextTuesday.getFullYear(), nextTuesday.getMonth() + 1, 0);
-        
-        // Add month header
         const monthName = nextTuesday.toLocaleString('sv-SE', { month: 'long' });
         const yearNum = nextTuesday.getFullYear();
         
@@ -281,11 +284,16 @@ class ChatController {
                 <div>Lör</div>
                 <div>Sön</div>
             </div>
-            <div class="calendar-grid">
+            <div class="calendar-grid" id="calendar">
         `;
 
+        // Generate calendar days
+        const monthStart = new Date(nextTuesday.getFullYear(), nextTuesday.getMonth(), 1);
+        const monthEnd = new Date(nextTuesday.getFullYear(), nextTuesday.getMonth() + 1, 0);
+        
         // Add empty cells for days before month starts
-        for (let i = 0; i < monthStart.getDay(); i++) {
+        const startDay = monthStart.getDay() === 0 ? 6 : monthStart.getDay() - 1;
+        for (let i = 0; i < startDay; i++) {
             calendarHtml += '<div class="calendar-day empty"></div>';
         }
 
@@ -308,8 +316,8 @@ class ChatController {
 
     generateTimeSlots() {
         const times = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00'];
-        return times.map(time => `
-            <button class="time-slot" onclick="chatController.selectTime('${time}')">
+        return times.map((time, index) => `
+            <button class="time-slot ${index === 1 ? 'selected' : ''}" onclick="chatController.selectTime('${time}')">
                 ${time}
             </button>
         `).join('');
@@ -317,32 +325,34 @@ class ChatController {
 
     async autoSelectDateTime() {
         // Select date (14th)
-        const dateCell = document.querySelector('.calendar-day[data-date="14"]');
+        const dateCell = document.querySelector('.calendar-day.selected');
         if (dateCell) {
             dateCell.classList.add('highlight');
-            await this.delay(500);
-            this.selectDate(14);
+            await this.delay(800);
+            dateCell.classList.remove('highlight');
             await this.delay(500);
             document.querySelector('#dateStep .next-button').click();
         }
 
         // Select time (10:00)
-        await this.delay(1000);
-        const timeSlots = document.querySelectorAll('.time-slot');
-        if (timeSlots[1]) {
-            timeSlots[1].classList.add('highlight');
-            await this.delay(500);
-            this.selectTime('10:00');
+        await this.delay(1200);
+        const selectedTimeSlot = document.querySelector('.time-slot.selected');
+        if (selectedTimeSlot) {
+            selectedTimeSlot.classList.add('highlight');
+            await this.delay(800);
+            selectedTimeSlot.classList.remove('highlight');
             await this.delay(500);
             document.querySelector('#timeStep .next-button').click();
         }
 
         // Confirm booking
-        await this.delay(1000);
+        await this.delay(1500);
         const confirmButton = document.querySelector('.confirm-button');
         if (confirmButton) {
             confirmButton.classList.add('highlight');
             await this.delay(1000);
+            confirmButton.classList.remove('highlight');
+            await this.delay(300);
             confirmButton.click();
         }
     }
@@ -424,11 +434,14 @@ class ChatController {
         await this.delay(100);
         planeContainer.classList.add('animate');
         
-        await this.delay(3000);
+        await this.delay(4000); // Wait for plane animation to complete
         await this.showFinalConfirmation();
     }
 
     async showFinalConfirmation() {
+        // Clear animation container
+        document.getElementById('animationContainer').innerHTML = '';
+        
         const container = document.createElement('div');
         container.className = 'final-confirmation';
         container.innerHTML = `
@@ -442,6 +455,7 @@ class ChatController {
                         <li>Möteslänk för videosamtal</li>
                         <li>Agenda för demon</li>
                         <li>Förberedelsematerial</li>
+                        <li>Kontaktinformation</li>
                     </ul>
                 </div>
                 <img src="https://www.axiestudio.se/logo.jpg" alt="Axie Studio Logo" class="confirmation-logo">
@@ -453,14 +467,17 @@ class ChatController {
         container.classList.add('show');
         
         // Wait before starting next cycle
-        await this.delay(5000);
+        await this.delay(6000);
         container.classList.remove('show');
-        await this.delay(500);
+        await this.delay(800);
         container.remove();
         
         // Reset chat container
         const chatContainer = document.querySelector('.chat-container');
         chatContainer.classList.remove('fade-out');
+        
+        // Clear modal container
+        document.getElementById('modalContainer').innerHTML = '';
     }
 
     delay(ms) {
