@@ -103,8 +103,8 @@ body {
     position: fixed;
     bottom: 24px;
     right: 24px;
-    width: 380px;
-    height: 600px;
+    width: 400px;
+    height: 650px;
     background: var(--background-white);
     border-radius: var(--border-radius-large);
     box-shadow: var(--shadow-heavy);
@@ -414,9 +414,9 @@ body {
 
 .modal-content {
     position: relative;
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
+    width: 95%;
+    max-width: 520px;
+    max-height: 85vh;
     background: white;
     border-radius: var(--border-radius-large);
     overflow: hidden;
@@ -1006,20 +1006,23 @@ body {
 /* Responsive Design */
 @media (max-width: 480px) {
     .chat-interface {
-        width: calc(100vw - 24px);
-        height: calc(100vh - 48px);
-        bottom: 12px;
-        right: 12px;
+        width: calc(100vw - 20px);
+        height: calc(100vh - 40px);
+        bottom: 10px;
+        right: 10px;
     }
     
     .chat-button {
-        bottom: 12px;
-        right: 12px;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
     }
     
     .modal-content {
-        width: 95%;
-        max-height: 95vh;
+        width: 98%;
+        max-height: 90vh;
+        margin: 10px;
     }
     
     .time-slots {
