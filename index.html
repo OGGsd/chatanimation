@@ -3,67 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Axie Studio Kundservice</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/chat-animations.css">
-    <link rel="stylesheet" href="styles/main.css">
-    <style>
-        :root {
-            --primary-color: #0066cc;
-            --secondary-color: #f8f9fa;
-            --text-color: #333333;
-            --bot-bg: #0066cc;
-            --user-bg: #e9ecef;
-            --bot-text: #ffffff;
-            --user-text: #333333;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            overflow: hidden;
-        }
-    </style>
+    <title>Axie Studio - AI Kundservice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/chatbot.css">
 </head>
 <body>
+    <!-- Floating Chat Button -->
+    <div class="chat-button" id="chatButton">
+        <div class="chat-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+            </svg>
+        </div>
+        <div class="notification-badge">1</div>
+    </div>
+
     <!-- Chat Interface -->
-    <div class="chat-container active" id="chatContainer">
+    <div class="chat-interface" id="chatInterface">
         <div class="chat-header">
-            <div class="header-content">
-                <img src="https://www.axiestudio.se/logo.jpg" alt="Axie Studio Logo" class="company-logo">
-                <div class="header-text">
-                    <h2>Axie Studio</h2>
-                    <span class="status">Online • Redo att hjälpa dig</span>
+            <div class="header-left">
+                <div class="company-avatar">
+                    <img src="https://www.axiestudio.se/logo.jpg" alt="Axie Studio" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="avatar-fallback">AS</div>
+                </div>
+                <div class="company-info">
+                    <h3>Axie Studio</h3>
+                    <span class="status">
+                        <div class="status-dot"></div>
+                        Online nu
+                    </span>
                 </div>
             </div>
-            <div class="chat-actions">
-                <button class="action-button" title="Minimera">_</button>
-                <button class="action-button" onclick="toggleChat()">✕</button>
+            <div class="header-actions">
+                <button class="minimize-btn" id="minimizeBtn">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13H5v-2h14v2z"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
         <div class="chat-messages" id="chatMessages">
-            <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="typing-text">Axie Studio skriver...</span>
             </div>
         </div>
 
-        <div class="chat-footer">
-            <div class="chat-input">
-                <textarea
-                    placeholder="Skriv ditt meddelande..."
-                    id="messageInput"
-                    rows="1"
-                    readonly
-                ></textarea>
-                <button class="send-button" disabled>
-                    <span>Skicka</span>
-                    <svg viewBox="0 0 24 24">
+        <div class="chat-input-area">
+            <div class="input-container">
+                <input type="text" id="messageInput" placeholder="Skriv ditt meddelande..." disabled>
+                <button class="send-button" id="sendButton" disabled>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
                         <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                     </svg>
                 </button>
@@ -71,23 +66,156 @@
         </div>
     </div>
 
-    <!-- Modal Container -->
-    <div id="modalContainer"></div>
+    <!-- Booking Modal -->
+    <div class="booking-modal" id="bookingModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Boka Din Konsultation</h2>
+                <div class="progress-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <span>Datum</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <span>Tid</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <span>Uppgifter</span>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <span>Bekräfta</span>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Animation Container -->
-    <div id="animationContainer"></div>
+            <div class="modal-body">
+                <!-- Step 1: Date Selection -->
+                <div class="booking-step active" data-step="1">
+                    <h3>Välj datum</h3>
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button class="nav-btn" id="prevMonth">&lt;</button>
+                            <h4 id="currentMonth">Maj 2024</h4>
+                            <button class="nav-btn" id="nextMonth">&gt;</button>
+                        </div>
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- Calendar will be generated by JS -->
+                        </div>
+                    </div>
+                    <div class="step-actions">
+                        <button class="btn-primary" id="nextToTime" disabled>Nästa</button>
+                    </div>
+                </div>
 
-    <script src="js/chat-controller.js"></script>
-    <script>
-        function toggleChat() {
-            const container = document.getElementById('chatContainer');
-            container.classList.toggle('active');
-        }
+                <!-- Step 2: Time Selection -->
+                <div class="booking-step" data-step="2">
+                    <h3>Välj tid</h3>
+                    <div class="time-slots" id="timeSlots">
+                        <!-- Time slots will be generated by JS -->
+                    </div>
+                    <div class="step-actions">
+                        <button class="btn-secondary" id="backToDate">Tillbaka</button>
+                        <button class="btn-primary" id="nextToForm" disabled>Nästa</button>
+                    </div>
+                </div>
 
-        // Initialize chat controller when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            window.chatController = new ChatController();
-        });
-    </script>
+                <!-- Step 3: Contact Form -->
+                <div class="booking-step" data-step="3">
+                    <h3>Dina uppgifter</h3>
+                    <form class="contact-form" id="contactForm">
+                        <div class="form-group">
+                            <label for="fullName">Namn *</label>
+                            <input type="text" id="fullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Företag</label>
+                            <input type="text" id="company">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-post *</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Telefon</label>
+                            <input type="tel" id="phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Meddelande</label>
+                            <textarea id="message" rows="3" placeholder="Berätta kort om era behov..."></textarea>
+                        </div>
+                    </form>
+                    <div class="step-actions">
+                        <button class="btn-secondary" id="backToTime">Tillbaka</button>
+                        <button class="btn-primary" id="nextToConfirm" disabled>Nästa</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Confirmation -->
+                <div class="booking-step" data-step="4">
+                    <h3>Bekräfta bokning</h3>
+                    <div class="booking-summary">
+                        <div class="summary-item">
+                            <strong>Datum:</strong>
+                            <span id="summaryDate">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Tid:</strong>
+                            <span id="summaryTime">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>Namn:</strong>
+                            <span id="summaryName">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <strong>E-post:</strong>
+                            <span id="summaryEmail">-</span>
+                        </div>
+                    </div>
+                    <div class="confirmation-note">
+                        <p>Vi kommer att gå igenom:</p>
+                        <ul>
+                            <li>Era specifika behov och utmaningar</li>
+                            <li>Hur AI kan förbättra er kundservice</li>
+                            <li>Praktiska demonstrationer</li>
+                            <li>Implementeringsplan och prissättning</li>
+                        </ul>
+                    </div>
+                    <div class="step-actions">
+                        <button class="btn-secondary" id="backToForm">Tillbaka</button>
+                        <button class="btn-confirm" id="confirmBooking">Bekräfta Bokning</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paper Plane Animation -->
+    <div class="paper-plane-animation" id="paperPlaneAnimation">
+        <div class="plane-container">
+            <div class="paper-plane">
+                <div class="plane-body"></div>
+                <div class="plane-wing-left"></div>
+                <div class="plane-wing-right"></div>
+            </div>
+            <div class="plane-trail"></div>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-content">
+            <div class="success-icon">✓</div>
+            <h2>Bokning Bekräftad!</h2>
+            <p>Tack för din bokning. Vi ser fram emot att träffa dig!</p>
+            <p class="success-details">En bekräftelse har skickats till din e-post med möteslänk och agenda.</p>
+            <img src="https://www.axiestudio.se/logo.jpg" alt="Axie Studio" class="success-logo" onerror="this.style.display='none'">
+        </div>
+    </div>
+
+    <script src="js/chatbot.js"></script>
 </body>
 </html>
